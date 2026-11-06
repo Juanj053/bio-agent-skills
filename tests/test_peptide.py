@@ -1,15 +1,14 @@
 """Unit tests for peptide biophysics and in-silico screening."""
 
 import pytest
+
 from bioskills.core.peptide import (
-    validate_peptide_sequence,
-    compute_net_charge,
-    compute_isoelectric_point,
-    compute_gravy,
-    compute_hydrophobic_moment,
-    calculate_peptide_properties,
     alanine_scanning_mutagenesis,
-    protease_cleavage_profile
+    calculate_peptide_properties,
+    compute_isoelectric_point,
+    compute_net_charge,
+    protease_cleavage_profile,
+    validate_peptide_sequence,
 )
 
 
@@ -27,15 +26,15 @@ def test_isoelectric_point_and_net_charge():
     # Poly-lysine should be strongly basic
     pI_k = compute_isoelectric_point("KKKKK")
     assert pI_k > 10.0
-    
+
     # Poly-glutamate should be strongly acidic
     pI_e = compute_isoelectric_point("EEEEE")
     assert pI_e < 4.0
-    
+
     # GHK (Gly-His-Lys) known basic tripeptide
     pI_ghk = compute_isoelectric_point("GHK")
     assert 9.0 < pI_ghk < 10.5
-    
+
     # Net charge at pI must be approximately 0.0
     z_at_pi = compute_net_charge("GHK", pI_ghk)
     assert abs(z_at_pi) < 0.01
@@ -54,7 +53,7 @@ def test_alanine_scanning_mutagenesis():
     # G and K should have mutations (H and K)
     assert len(muts) == 3
     # Mutating Lysine to Alanine should reduce pI and net charge
-    lys_mut = [m for m in muts if m["wild_type_residue"] == "K"][0]
+    lys_mut = next(m for m in muts if m["wild_type_residue"] == "K")
     assert lys_mut["delta_net_charge"] < 0.0
 
 

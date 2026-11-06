@@ -1,11 +1,11 @@
 """Unit tests for bioprocess kinetics, hydrodynamics, and scale-up."""
 
-import pytest
 import math
+
 from bioskills.core.bioprocess import (
-    calculate_kinetics,
     calculate_hydrodynamics,
-    scaleup_bioreactor
+    calculate_kinetics,
+    scaleup_bioreactor,
 )
 
 
@@ -28,10 +28,7 @@ def test_haldane_substrate_inhibition():
 
 def test_calculate_hydrodynamics_rushton():
     res = calculate_hydrodynamics(
-        reactor_type="str_rushton",
-        volume_liters=20.0,
-        rpm=450.0,
-        vvm=1.2
+        reactor_type="str_rushton", volume_liters=20.0, rpm=450.0, vvm=1.2
     )
     assert res["reynolds_number"] > 10000.0  # Fully turbulent
     assert res["flow_regime"] == "Fully Turbulent"
@@ -42,10 +39,7 @@ def test_calculate_hydrodynamics_rushton():
 
 def test_calculate_hydrodynamics_airlift():
     res = calculate_hydrodynamics(
-        reactor_type="airlift",
-        volume_liters=20.0,
-        rpm=0.0,
-        vvm=1.5
+        reactor_type="airlift", volume_liters=20.0, rpm=0.0, vvm=1.5
     )
     assert res["ungassed_power_p0_watts"] == 0.0
     assert res["volumetric_mass_transfer_kla_h_inv"] > 10.0
@@ -56,7 +50,7 @@ def test_scaleup_bioreactor():
         source_volume_L=20.0,
         target_volume_L=500.0,
         source_rpm=450.0,
-        criterion="power_volume"
+        criterion="power_volume",
     )
     assert res["scale_up_factor_volume"] == 25.0
     # In P/V scaling, RPM decreases at larger scale

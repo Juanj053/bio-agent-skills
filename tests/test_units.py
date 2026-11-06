@@ -1,10 +1,9 @@
 """Unit tests for dimensional unit conversions."""
 
-import pytest
 from bioskills.core.units import (
+    convert_aeration,
     convert_dissolved_oxygen,
     convert_od600_to_biomass,
-    convert_aeration
 )
 
 
@@ -26,7 +25,9 @@ def test_convert_od600():
 
 
 def test_convert_aeration():
-    res = convert_aeration(value=1.2, from_unit="vvm", volume_liters=20.0, tank_diameter_m=0.25)
+    res = convert_aeration(
+        value=1.2, from_unit="vvm", volume_liters=20.0, tank_diameter_m=0.25
+    )
     # 1.2 vvm on 20L = 24 L/min
     assert abs(res["values"]["flow_liters_per_min"] - 24.0) < 1e-4
     assert res["values"]["superficial_velocity_m_per_s"] > 0.0

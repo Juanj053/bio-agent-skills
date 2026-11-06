@@ -1,13 +1,13 @@
 """Unit tests for the bioskills CLI commands."""
 
+import json
 import subprocess
 import sys
-import json
 
 
 def run_cli(*args):
     cmd = [sys.executable, "-m", "bioskills.cli"] + list(args)
-    proc = subprocess.run(cmd, capture_output=True, text=True)
+    proc = subprocess.run(cmd, capture_output=True, text=True, check=False)
     return proc
 
 
@@ -20,14 +20,26 @@ def test_cli_peptide_analyze():
 
 
 def test_cli_bioprocess_kinetics():
-    proc = run_cli("bioprocess", "kinetics", "--mu-max", "0.4", "--substrate", "10", "--ks", "2", "--json")
+    proc = run_cli(
+        "bioprocess",
+        "kinetics",
+        "--mu-max",
+        "0.4",
+        "--substrate",
+        "10",
+        "--ks",
+        "2",
+        "--json",
+    )
     assert proc.returncode == 0
     data = json.loads(proc.stdout)
     assert data["gross_growth_rate_mu"] > 0.0
 
 
 def test_cli_stoichiometry_reduction():
-    proc = run_cli("stoichiometry", "reduction", "-C", "6", "-H", "12", "-O", "6", "--json")
+    proc = run_cli(
+        "stoichiometry", "reduction", "-C", "6", "-H", "12", "-O", "6", "--json"
+    )
     assert proc.returncode == 0
     data = json.loads(proc.stdout)
     assert abs(data["degree_of_reduction_gamma"] - 4.0) < 1e-3
