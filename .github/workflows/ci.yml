@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v2
+
+      - name: Install package & dev dependencies
+        run: |
+          uv pip install --system -e ".[dev]"
+
+      - name: Run pytest suite
+        run: |
+          pytest -v tests/
+
+      - name: Test CLI execution
+        run: |
+          bioskills --version
+          bioskills peptide analyze --seq "GHK" --json
+          bioskills bioprocess kinetics --mu-max 0.4 --substrate 10 --ks 2 --json
+          bioskills stoichiometry balance --s0 35 --sf 0 --x0 0.8 --xf 12 --json

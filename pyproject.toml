@@ -1,0 +1,44 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "bio-agent-skills"
+version = "1.0.0"
+description = "Rigorous bioengineering, bioprocess kinetics, stoichiometry, and in-silico peptide biophysics agent skills CLI suite."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [
+    { name = "Juan José Álvarez Morales", email = "jjalvarezm77@gmail.com" }
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+]
+
+[project.scripts]
+bioskills = "bioskills.cli:main"
+bio-skills = "bioskills.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/Juanj053/bio-agent-skills"
+Repository = "https://github.com/Juanj053/bio-agent-skills.git"
+"LinkedIn Author" = "https://www.linkedin.com/in/juanj-alva"
+"Elevate Biotech" = "https://github.com/Juanj053"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/bioskills"]

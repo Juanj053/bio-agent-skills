@@ -1,0 +1,24 @@
+cff-version: 1.2.0
+message: "If you use this bioengineering skills suite or CLI in your academic research, agent architectures, or biotechnology pipelines, please cite it as below."
+authors:
+  - family-names: "Álvarez Morales"
+    given-names: "Juan José"
+    orcid: "https://orcid.org/0009-0004-9844-3866"
+    affiliation: "Elevate Biotech & Agromanper"
+title: "bio-agent-skills: Rigorous Bioengineering & In-Silico Molecular Agent Skills Suite"
+version: 1.0.0
+date-released: 2026-11-06
+url: "https://github.com/Juanj053/bio-agent-skills"
+repository-code: "https://github.com/Juanj053/bio-agent-skills"
+license: MIT
+keywords:
+  - agent-skills
+  - ai-agents
+  - bioengineering
+  - bioprocess-kinetics
+  - peptide-biophysics
+  - isoelectric-point
+  - mass-transfer-kla
+  - stoichiometry
+  - carbon-balance
+  - cli
