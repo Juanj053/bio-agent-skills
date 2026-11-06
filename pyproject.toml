@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "bio-agent-skills"
-version = "1.0.0"
+version = "1.1.0"
 description = "Rigorous bioengineering, bioprocess kinetics, stoichiometry, and in-silico peptide biophysics agent skills CLI suite."
 readme = "README.md"
 requires-python = ">=3.10"

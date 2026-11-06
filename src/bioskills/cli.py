@@ -11,11 +11,14 @@ from typing import Any
 from bioskills.core.bioprocess import (
     calculate_hydrodynamics,
     calculate_kinetics,
+    calculate_luedeking_piret,
     scaleup_bioreactor,
 )
 from bioskills.core.peptide import (
     alanine_scanning_mutagenesis,
     calculate_peptide_properties,
+    compute_boman_index,
+    compute_instability_index,
     protease_cleavage_profile,
 )
 from bioskills.core.stoichiometry import (
@@ -89,6 +92,21 @@ def cmd_peptide_scan(args):
     output_result(res, args.json, "Alanine Scanning Mutagenesis")
 
 
+def cmd_peptide_stability(args):
+    instability = compute_instability_index(args.seq)
+    boman = compute_boman_index(args.seq)
+    res = {
+        "sequence": args.seq.strip().upper(),
+        "length": len(args.seq.strip()),
+        "instability_index": instability["instability_index"],
+        "is_stable_in_vitro": instability["is_stable"],
+        "instability_classification": instability["classification"],
+        "boman_interaction_index": boman["boman_index"],
+        "boman_classification": boman["classification"],
+    }
+    output_result(res, args.json, "Peptide Stability & Interaction Index")
+
+
 def cmd_peptide_cleave(args):
     res = protease_cleavage_profile(args.seq)
     output_result(res, args.json, "MEROPS Protease Cleavage Profile")
@@ -96,9 +114,25 @@ def cmd_peptide_cleave(args):
 
 def cmd_bioprocess_kinetics(args):
     res = calculate_kinetics(
-        args.mu_max, args.substrate, args.ks, ki=args.ki, kd=args.kd
+        args.mu_max,
+        args.substrate,
+        args.ks,
+        ki=args.ki,
+        kd=args.kd,
+        biomass=args.biomass,
+        ks_x=args.ks_x,
     )
     output_result(res, args.json, "Bioprocess Growth Kinetics")
+
+
+def cmd_bioprocess_luedeking(args):
+    res = calculate_luedeking_piret(
+        mu=args.mu,
+        biomass=args.biomass,
+        alpha=args.alpha,
+        beta=args.beta,
+    )
+    output_result(res, args.json, "Luedeking-Piret Product Formation Kinetics")
 
 
 def cmd_bioprocess_hydrodynamics(args):
@@ -240,7 +274,7 @@ def main():
         prog="bioskills",
         description="BioSkills CLI: Rigorous Bioengineering & In-Silico Molecular Agent Skills Suite",
     )
-    parser.add_argument("--version", action="version", version="bioskills 1.0.0")
+    parser.add_argument("--version", action="version", version="bioskills 1.1.0")
     subparsers = parser.add_subparsers(dest="subcommand", required=True)
 
     # 1. PEPTIDE COMMANDS
@@ -261,13 +295,25 @@ def main():
     pep_an.add_argument(
         "--scale",
         default="lehninger",
-        choices=["lehninger", "emboss", "rodwell", "grimsley"],
+        choices=["lehninger", "emboss", "rodwell", "grimsley", "bjellqvist"],
         help="pKa scale",
     )
     pep_an.add_argument(
         "--json", action="store_true", help="Output machine-readable JSON"
     )
     pep_an.set_defaults(func=cmd_peptide_analyze)
+
+    pep_stab = sub_pep.add_parser(
+        "stability",
+        help="Compute Guruprasad instability index and Boman interaction potential",
+    )
+    pep_stab.add_argument(
+        "--seq", required=True, help="Single-letter amino acid sequence"
+    )
+    pep_stab.add_argument(
+        "--json", action="store_true", help="Output machine-readable JSON"
+    )
+    pep_stab.set_defaults(func=cmd_peptide_stability)
 
     pep_sc = sub_pep.add_parser(
         "scan", help="Perform in-silico alanine scanning mutagenesis"
@@ -301,7 +347,8 @@ def main():
     sub_bio = p_bio.add_subparsers(dest="action", required=True)
 
     bio_kin = sub_bio.add_parser(
-        "kinetics", help="Calculate Monod or Haldane growth rate and doubling times"
+        "kinetics",
+        help="Calculate Monod, Haldane or Contois growth rate and doubling times",
     )
     bio_kin.add_argument(
         "--mu-max",
@@ -328,9 +375,48 @@ def main():
         "--kd", type=float, default=0.0, help="Specific decay rate [h^-1]"
     )
     bio_kin.add_argument(
+        "--biomass",
+        type=float,
+        default=None,
+        help="Biomass concentration [g/L] (for Contois crowding model)",
+    )
+    bio_kin.add_argument(
+        "--ks-x",
+        type=float,
+        default=None,
+        help="Contois saturation constant relative to biomass [g_S / g_X]",
+    )
+    bio_kin.add_argument(
         "--json", action="store_true", help="Output machine-readable JSON"
     )
     bio_kin.set_defaults(func=cmd_bioprocess_kinetics)
+
+    bio_lp = sub_bio.add_parser(
+        "luedeking",
+        help="Calculate Luedeking-Piret product formation rate and classification",
+    )
+    bio_lp.add_argument(
+        "--mu", type=float, required=True, help="Specific growth rate mu [h^-1]"
+    )
+    bio_lp.add_argument(
+        "--biomass", type=float, required=True, help="Biomass concentration X [g/L]"
+    )
+    bio_lp.add_argument(
+        "--alpha",
+        type=float,
+        default=0.15,
+        help="Growth-associated coefficient alpha [g_P / g_X]",
+    )
+    bio_lp.add_argument(
+        "--beta",
+        type=float,
+        default=0.01,
+        help="Non-growth-associated coefficient beta [g_P / g_X / h]",
+    )
+    bio_lp.add_argument(
+        "--json", action="store_true", help="Output machine-readable JSON"
+    )
+    bio_lp.set_defaults(func=cmd_bioprocess_luedeking)
 
     bio_hyd = sub_bio.add_parser(
         "hydrodynamics", help="Compute Reynolds, tip speed, P/V, kla and OTR"

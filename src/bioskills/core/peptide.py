@@ -7,7 +7,9 @@ from typing import Any
 
 from bioskills.core.constants import (
     AMINO_ACIDS,
+    BOMAN_SCALE,
     EISENBERG,
+    GURUPRASAD_DIWV,
     KYTE_DOOLITTLE,
     PKA_SCALES,
     RESIDUE_MW_AVERAGE,
@@ -123,6 +125,63 @@ def compute_aliphatic_index(sequence: str) -> float:
     return round(ai, 2)
 
 
+def compute_instability_index(sequence: str) -> dict[str, Any]:
+    """
+    Computes the protein/peptide Instability Index proposed by Guruprasad et al. (1990).
+    II = (10 / L) * sum_{i=1}^{L-1} DIWV(x_i, x_{i+1})
+
+    A peptide whose instability index is < 40 is predicted as stable in vitro.
+    A value >= 40 predicts that the peptide may be chemically or conformationally unstable.
+    """
+    seq = validate_peptide_sequence(sequence)
+    n = len(seq)
+    if n < 2:
+        return {
+            "instability_index": 0.0,
+            "is_stable": True,
+            "classification": "Stable in vitro (short monomer/oligopeptide)",
+        }
+
+    sum_diwv = sum(GURUPRASAD_DIWV.get((seq[i], seq[i + 1]), 1.0) for i in range(n - 1))
+    ii = (10.0 / n) * sum_diwv
+    is_stable = ii < 40.0
+    classification = (
+        "Stable in vitro (II < 40.0)" if is_stable else "Unstable in vitro (II >= 40.0)"
+    )
+    return {
+        "instability_index": round(ii, 2),
+        "is_stable": is_stable,
+        "classification": classification,
+    }
+
+
+def compute_boman_index(sequence: str) -> dict[str, Any]:
+    """
+    Computes the Boman Interaction Index (protein-binding potential) (Boman, 2003).
+    Boman = (1 / L) * sum_{i=1}^L scale(x_i)
+
+    Values > 2.48 kcal/mol indicate high protein-binding potential / receptor interaction.
+    Values < 2.01 kcal/mol indicate selective antibacterial activity with lower hemolytic risk.
+    """
+    seq = validate_peptide_sequence(sequence)
+    n = len(seq)
+    if n == 0:
+        return {"boman_index": 0.0, "classification": "Unknown"}
+
+    boman = sum(BOMAN_SCALE.get(aa, 0.0) for aa in seq) / n
+    if boman > 2.48:
+        classification = "High receptor-binding potential (> 2.48 kcal/mol)"
+    elif boman < 2.01:
+        classification = "Selective antimicrobial profile (< 2.01 kcal/mol)"
+    else:
+        classification = "Moderate interaction potential (2.01 - 2.48 kcal/mol)"
+
+    return {
+        "boman_index": round(boman, 2),
+        "classification": classification,
+    }
+
+
 def calculate_peptide_properties(
     sequence: str, ph: float = 7.4, pka_scale: str = "lehninger"
 ) -> dict[str, Any]:
@@ -146,6 +205,8 @@ def calculate_peptide_properties(
     mu_h_helix = compute_hydrophobic_moment(seq, 100.0)
     mu_h_sheet = compute_hydrophobic_moment(seq, 160.0)
     aliphatic_idx = compute_aliphatic_index(seq)
+    instability = compute_instability_index(seq)
+    boman = compute_boman_index(seq)
 
     # Amino acid composition
     comp = {aa: seq.count(aa) for aa in sorted(set(seq))}
@@ -171,6 +232,11 @@ def calculate_peptide_properties(
         "hydrophobic_moment_helix": mu_h_helix,
         "hydrophobic_moment_sheet": mu_h_sheet,
         "aliphatic_index": aliphatic_idx,
+        "instability_index": instability["instability_index"],
+        "is_stable_in_vitro": instability["is_stable"],
+        "instability_classification": instability["classification"],
+        "boman_interaction_index": boman["boman_index"],
+        "boman_classification": boman["classification"],
         "solubility_risk": solubility_risk,
         "composition": comp,
     }

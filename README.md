@@ -214,6 +214,15 @@ bio-agent-skills/
 
 ---
 
+## 💡 Academic Inspiration & Open-Source References
+
+This software suite builds upon and synthesizes pioneering open-source methodologies from the computational biology and bioprocess engineering communities:
+- **Peptide Biophysical Descriptors & Stability:** Formulations for in-vitro instability and protein-binding indices adapted from Guruprasad et al. (1990) and Boman (2003), drawing inspiration from the open-source architectures of [`peptides.py`](https://github.com/althonos/peptides.py) (*Larralde et al., EMBL Heidelberg*) and [`modlAMP`](https://github.com/alexarnimueller/modlAMP) (*Müller et al., ETH Zürich*).
+- **pKa Electrometric Scales:** Bjellqvist pKa titration scales derived from ExPASy ProtParam (*Bjellqvist et al., 1993*), Lehninger Principles of Biochemistry, and EMBOSS algorithms.
+- **Bioprocess Kinetics & Mass Transfer:** High-cell-density Contois kinetics (*Contois, 1959*), Luedeking-Piret mixed product formation (*Luedeking & Piret, 1959*), and Van't Riet gassed power correlations (*Van't Riet, 1979*), synthesizing insights from biochemical engineering treatises (*Bailey & Ollis; Doran, 2013*).
+
+---
+
 ## 📜 Citation
 
 If you utilize this skills suite or CLI tool in your academic research, industrial biomanufacturing scale-up protocols, or agentic AI workflows, please cite:

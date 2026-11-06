@@ -5,6 +5,8 @@ import pytest
 from bioskills.core.peptide import (
     alanine_scanning_mutagenesis,
     calculate_peptide_properties,
+    compute_boman_index,
+    compute_instability_index,
     compute_isoelectric_point,
     compute_net_charge,
     protease_cleavage_profile,
@@ -39,6 +41,10 @@ def test_isoelectric_point_and_net_charge():
     z_at_pi = compute_net_charge("GHK", pI_ghk)
     assert abs(z_at_pi) < 0.01
 
+    # Bjellqvist scale test
+    pI_bj = compute_isoelectric_point("GHK", pka_scale="bjellqvist")
+    assert 8.5 < pI_bj < 10.5
+
 
 def test_calculate_peptide_properties():
     res = calculate_peptide_properties("GHK", ph=7.4)
@@ -46,6 +52,27 @@ def test_calculate_peptide_properties():
     assert 340.0 < res["mw_average_da"] < 350.0
     assert res["net_charge_at_target_ph"] > 0.0  # Positive charge at pH 7.4
     assert res["gravy_score"] < 0.0  # Hydrophilic
+    assert "instability_index" in res
+    assert "boman_interaction_index" in res
+
+
+def test_instability_and_boman_index():
+    # Canonical Guruprasad (1990) test sequence: QWGRRCCGWGPGRRYCVRWC
+    seq = "QWGRRCCGWGPGRRYCVRWC"
+    instab = compute_instability_index(seq)
+    assert abs(instab["instability_index"] - 83.68) < 0.1
+    assert instab["is_stable"] is False
+    assert "Unstable" in instab["classification"]
+
+    # Short peptide / stable check
+    short = compute_instability_index("AAAA")
+    assert short["instability_index"] < 40.0
+    assert short["is_stable"] is True
+
+    # Boman interaction index check
+    boman = compute_boman_index(seq)
+    assert abs(boman["boman_index"] - 3.02) < 0.05
+    assert "High" in boman["classification"]
 
 
 def test_alanine_scanning_mutagenesis():

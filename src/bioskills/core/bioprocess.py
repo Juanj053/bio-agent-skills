@@ -14,37 +14,49 @@ def calculate_kinetics(
     ks: float,
     ki: float | None = None,
     kd: float = 0.0,
+    biomass: float | None = None,
+    ks_x: float | None = None,
 ) -> dict[str, Any]:
     """
-    Computes microbial and mammalian growth kinetics under Monod or Haldane inhibition models.
+    Computes microbial and mammalian growth kinetics under Monod, Haldane (substrate inhibition),
+    or Contois (cell density / biomass crowding inhibition) models.
     """
     if mu_max <= 0:
         raise ValueError("mu_max must be greater than 0.")
-    if ks <= 0:
-        raise ValueError("Ks must be greater than 0.")
+    if ks <= 0 and (ks_x is None or ks_x <= 0):
+        raise ValueError("Ks (or ks_x for Contois) must be greater than 0.")
     if substrate < 0:
         raise ValueError("Substrate concentration cannot be negative.")
 
     s = float(substrate)
+    s_opt = None
+    mu_at_opt = None
 
-    # Check if substrate inhibition (Haldane model) is active
-    if ki is not None and ki > 0:
+    # 1. Contois Kinetics (Cell Crowding / High Density Fermentation)
+    if biomass is not None and (ks_x is not None or ks > 0):
+        eff_ksx = ks_x if ks_x is not None else ks
+        model = "Contois (Biomass-Inhibited / High Cell Density)"
+        denom = eff_ksx * biomass + s
+        mu_gross = (mu_max * s) / denom if denom > 0 else 0.0
+
+    # 2. Haldane Substrate Inhibition Kinetics
+    elif ki is not None and ki > 0:
         model = "Haldane (Substrate Inhibition)"
         denom = ks + s + (s**2) / ki
         mu_gross = (mu_max * s) / denom if denom > 0 else 0.0
         s_opt = math.sqrt(ks * ki)
         mu_at_opt = mu_max / (1.0 + 2.0 * math.sqrt(ks / ki))
+
+    # 3. Classical Monod Kinetics
     else:
         model = "Monod (Classical Uninhibited)"
         denom = ks + s
         mu_gross = (mu_max * s) / denom if denom > 0 else 0.0
-        s_opt = None
-        mu_at_opt = None
 
     mu_net = max(0.0, mu_gross - kd)
     doubling_time_h = round(math.log(2) / mu_net, 2) if mu_net > 1e-6 else None
 
-    return {
+    res = {
         "kinetic_model": model,
         "substrate_g_L": s,
         "mu_max_h_inv": mu_max,
@@ -54,8 +66,57 @@ def calculate_kinetics(
         "gross_growth_rate_mu": round(mu_gross, 4),
         "net_growth_rate_mu_net": round(mu_net, 4),
         "doubling_time_hours": doubling_time_h,
-        "optimal_substrate_concentration_s_opt": round(s_opt, 3) if s_opt else None,
-        "max_attainable_growth_rate": round(mu_at_opt, 4) if mu_at_opt else mu_max,
+    }
+    if s_opt is not None:
+        res["optimal_substrate_concentration_s_opt"] = round(s_opt, 3)
+        res["max_attainable_growth_rate"] = round(mu_at_opt, 4) if mu_at_opt else mu_max
+    if biomass is not None:
+        res["biomass_g_L"] = round(biomass, 3)
+        res["ks_x_contois"] = ks_x if ks_x is not None else ks
+
+    return res
+
+
+def calculate_luedeking_piret(
+    mu: float,
+    biomass: float,
+    alpha: float,
+    beta: float,
+) -> dict[str, Any]:
+    """
+    Computes Luedeking-Piret product formation rate:
+    q_P = alpha * mu + beta
+    dP_dt = q_P * X = alpha * (dX/dt) + beta * X
+
+    alpha: Growth-associated product formation coefficient (g product / g biomass)
+    beta: Non-growth-associated product formation coefficient (g product / g biomass / h)
+    """
+    if biomass < 0:
+        raise ValueError("Biomass concentration cannot be negative.")
+
+    qp = alpha * mu + beta
+    dp_dt = qp * biomass
+
+    # Classification
+    if alpha > 0 and beta <= 1e-6:
+        formation_type = (
+            "Growth-Associated (Type I: Primary Metabolites / Recombinant Proteins)"
+        )
+    elif alpha <= 1e-6 and beta > 0:
+        formation_type = (
+            "Non-Growth-Associated (Type II: Secondary Metabolites / Antibiotics)"
+        )
+    else:
+        formation_type = "Mixed Growth-Associated (Type III: Luedeking-Piret Classic)"
+
+    return {
+        "specific_growth_rate_mu": round(mu, 4),
+        "biomass_g_L": round(biomass, 3),
+        "alpha_growth_assoc": alpha,
+        "beta_non_growth_assoc": beta,
+        "specific_product_formation_rate_qp": round(qp, 5),
+        "volumetric_productivity_g_L_h": round(dp_dt, 5),
+        "product_formation_type": formation_type,
     }
 
 

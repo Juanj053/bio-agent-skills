@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.1.0] - 2026-11-06
+
+### Added
+- **Guruprasad Instability Index (`bioskills.core.peptide`)**:
+  - Embedded the complete $20 \times 20$ Dipeptide Instability Weight Value (DIWV) matrix ($399$ statistical pairs from Guruprasad et al., 1990).
+  - Analytical prediction of *in vitro* peptide stability ($II < 40$ classified as stable; $II \ge 40$ as unstable).
+  - New CLI subcommand: `bioskills peptide stability --seq <SEQ> [--json]`.
+- **Boman Interaction Index (`bioskills.core.peptide`)**:
+  - Implementation of Boman (2003) protein-binding and receptor interaction index based on free energies of transfer.
+  - Automated classification: high receptor interaction (> 2.48 kcal/mol) vs. selective antimicrobial profile (< 2.01 kcal/mol).
+- **Bjellqvist pKa Scale (`bioskills.core.constants`)**:
+  - Added ExPASy ProtParam standard Bjellqvist pKa scale (`bjellqvist`) to `PKA_SCALES`.
+- **Contois High-Cell-Density Kinetics (`bioskills.core.bioprocess`)**:
+  - Growth inhibition modeling driven by biomass concentration / steric crowding ($\mu = \mu_{\max} \frac{S}{K_{SX} X + S}$).
+  - Supported in CLI via `--biomass` and `--ks-x`.
+- **Luedeking-Piret Product Formation Kinetics (`bioskills.core.bioprocess`)**:
+  - Mathematical decoupling of growth-associated ($\alpha$) vs. non-growth-associated ($\beta$) metabolite synthesis ($q_P = \alpha \mu + \beta$).
+  - Automated classification: Type I (Primary metabolites), Type II (Secondary/antibiotics), and Type III (Mixed).
+  - New CLI subcommand: `bioskills bioprocess luedeking --mu <MU> --biomass <X> [--alpha <A>] [--beta <B>] [--json]`.
+- **Academic Inspiration & Citations**:
+  - Formal academic references section in `README.md` and `CITATION.cff` acknowledging the seminal open-source architectures of `peptides.py` (Larralde et al., EMBL) and `modlAMP` (Müller et al., ETH Zürich).
+
+---
+
 ## [1.0.0] - 2026-11-06
 
 ### Added
